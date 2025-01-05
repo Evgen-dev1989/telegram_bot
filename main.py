@@ -9,12 +9,12 @@ from db import user, password, database, host, port, token
 nest_asyncio.apply()
 
 create_db = (
-    """
-            DROP TABLE IF EXISTS users CASCADE;
-    """,
-    """
-            DROP TABLE IF EXISTS categories CASCADE;
-    """,
+    # """
+    #         DROP TABLE IF EXISTS users CASCADE;
+    # """,
+    # """
+    #         DROP TABLE IF EXISTS categories CASCADE;
+    # """,
     """
         CREATE TABLE IF NOT EXISTS users(
             id SERIAL,
