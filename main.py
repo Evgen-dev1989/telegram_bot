@@ -169,9 +169,9 @@ async def main():
     application = Application.builder().token('7790924699:AAGpKDdYpp9jjYgiJHqtkLINR9GVR9keq20').build()
 
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("category", news))  # Для текстового ввода
-    application.add_handler(CallbackQueryHandler(handle_callback_query))  # Для кнопок
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))  # Для кнопок выбора
+    application.add_handler(CommandHandler("category", news))  
+    application.add_handler(CallbackQueryHandler(handle_callback_query))  
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))  
 
     await application.run_polling()
 
