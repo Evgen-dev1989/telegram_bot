@@ -4,7 +4,7 @@ import asyncio
 import asyncpg
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import nest_asyncio
-from db import user, password, database, host, port\
+from db import user, password, database, host, port, token
 
 nest_asyncio.apply()
 
@@ -166,7 +166,7 @@ async def send_news(update: Update, context: ContextTypes.DEFAULT_TYPE, category
         await message.reply_text(f"No news found for category: {category}")
 
 async def main():
-    application = Application.builder().token('7790924699:AAGpKDdYpp9jjYgiJHqtkLINR9GVR9keq20').build()
+    application = Application.builder().token(token).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("category", news))  
