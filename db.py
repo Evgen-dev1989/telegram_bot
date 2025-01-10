@@ -4,3 +4,5 @@ database = "telegram"
 host = "localhost"
 port = 5432
 token = '7790924699:AAGpKDdYpp9jjYgiJHqtkLINR9GVR9keq20'
+
+print('11')
