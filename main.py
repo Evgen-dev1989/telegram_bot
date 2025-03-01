@@ -9,12 +9,6 @@ from db import user, password, database, host, port, token
 nest_asyncio.apply()
 
 create_db = (
-    # """
-    #         DROP TABLE IF EXISTS users CASCADE;
-    # """,
-    # """
-    #         DROP TABLE IF EXISTS categories CASCADE;
-    # """,
     """
         CREATE TABLE IF NOT EXISTS users(
             id SERIAL,
@@ -38,23 +32,32 @@ create_db = (
     """
 )
 
+async def connect_db():
+
+    return await asyncpg.connect(user=user, password=password, database=database, host=host, port=port)
+
+
 async def command_execute(command, arguments = None):
 
+    conn = None
     try:
-        conn = await asyncpg.connect(user=user, password=password, database=database, host=host, port=port)
+        conn = await connect_db()
         if arguments is not None:
             print('HERE')
             await conn.execute(command, *arguments)
         else :
             await conn.execute(command)
 
-    except Exception as e:
-        print(f"Error: {e}")
-        raise
+    except asyncpg.PostgresError as e:
+        raise e(status_code=500, detail=f"Database error: {str(e)}")
+    
     finally:
-        await conn.close()
+        if conn is not None:  
+            await conn.close()
+
 
 def create_keyboard(buttons):
+
     keyboard = [[InlineKeyboardButton(text=button['text'], callback_data=button['callback_data'])] for button in buttons]
     return InlineKeyboardMarkup(keyboard)
 
@@ -73,6 +76,7 @@ reply_markup = create_keyboard(buttons)
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
     users_id = []
         
     user_id = update.effective_user.id
@@ -94,6 +98,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def get_news(category):
+
     params = {
         'sortBy': 'top',
         'language': 'en',
