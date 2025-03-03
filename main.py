@@ -4,9 +4,16 @@ import asyncio
 import asyncpg
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import nest_asyncio
-from db import user, password, database, host, port, token
+#from db import user, password, database, host, port, token
 
 nest_asyncio.apply()
+token = "7790924699:AAGpKDdYpp9jjYgiJHqtkLINR9GVR9keq20"
+host = 'localhost'
+port = 5432 
+database = 'telegram'
+password = "1111"
+user = 'postgres'
+
 
 create_db = (
     """
@@ -43,13 +50,12 @@ async def command_execute(command, arguments = None):
     try:
         conn = await connect_db()
         if arguments is not None:
-            print('HERE')
             await conn.execute(command, *arguments)
         else :
             await conn.execute(command)
 
     except asyncpg.PostgresError as e:
-        raise e(status_code=500, detail=f"Database error: {str(e)}")
+        raise e
     
     finally:
         if conn is not None:  
@@ -77,24 +83,30 @@ reply_markup = create_keyboard(buttons)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
-    users_id = []
-        
-    user_id = update.effective_user.id
-    users_id.append(user_id)
-    user_name = update.effective_user.username
-    first_name = update.effective_user.first_name
-    last_name = update.effective_user.last_name
+    conn = None
+    try:
+        conn = await connect_db()
+        user_id = update.effective_user.id
+        user_name = update.effective_user.username
+        first_name = update.effective_user.first_name
+        last_name = update.effective_user.last_name
     
-    if user_id in users_id:
-        pass
-    else:
-        insert_query = """
-        INSERT INTO users(time, user_id, user_name, first_name, last_name) 
-        VALUES (NOW(), $1, $2, $3, $4);
-        """
-        #data = [insert_query, user_id, user_name, first_name, last_name]
-        await command_execute(insert_query, [user_id, user_name, first_name, last_name])
-    await update.message.reply_text(f"Hello {first_name}. Do you want to read news?")
+        record = await conn.fetchval('SELECT user_id FROM users WHERE user_id = $1', user_id)
+
+        if record is None:  
+            insert_query = """
+            INSERT INTO users(time, user_id, user_name, first_name, last_name) 
+            VALUES (NOW(), $1, $2, $3, $4);
+            """
+            await command_execute(insert_query, [user_id, user_name, first_name, last_name])
+        await update.message.reply_text(f"Hello {first_name}. Do you want to read news?")
+    except asyncpg.PostgresError as e:
+        print(f"Database error: {str(e)}") 
+
+    
+    finally:
+        if conn is not None:  
+            await conn.close()
 
 
 def get_news(category):
@@ -171,6 +183,7 @@ async def send_news(update: Update, context: ContextTypes.DEFAULT_TYPE, category
         await message.reply_text(f"No news found for category: {category}")
 
 async def main():
+
     application = Application.builder().token(token).build()
 
     application.add_handler(CommandHandler("start", start))
