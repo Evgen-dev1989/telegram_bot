@@ -4,15 +4,10 @@ import asyncio
 import asyncpg
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import nest_asyncio
-#from db import user, password, database, host, port, token
+from data import token, host, port, password, database, user
+
 
 nest_asyncio.apply()
-token = "7790924699:AAGpKDdYpp9jjYgiJHqtkLINR9GVR9keq20"
-host = 'localhost'
-port = 5432 
-database = 'telegram'
-password = "1111"
-user = 'postgres'
 
 
 create_db = (
