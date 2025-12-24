@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
-import requests
+import httpx
 import asyncio
 import asyncpg
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
@@ -48,7 +48,13 @@ create_db = (
 
 async def connect_db():
 
-    return await asyncpg.connect(user=user, password=password, database=database, host=host, port=port)
+    return await asyncpg.connect(
+        user = os.getenv("DB_USER"),
+        password = os.getenv("DB_PASSWORD"),
+        database = os.getenv("DB_NAME"),
+        host = os.getenv("DB_HOST"),
+        port = os.getenv("DB_PORT")
+        )
 
 
 async def command_execute(command, arguments = None):
@@ -116,7 +122,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             await conn.close()
 
 
-def get_news(category):
+async def get_news(category):
 
     params = {
         'sortBy': 'top',
@@ -128,9 +134,10 @@ def get_news(category):
 
     url = 'https://newsapi.org/v2/top-headlines'
     try:
-        response = requests.get(url, params=params)
-
-        data = response.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status() 
+            data = response.json()
 
         ready_news = []
 
@@ -145,7 +152,15 @@ def get_news(category):
     except requests.RequestException as e:
         print(f"Error fetching news: {e}")
         return []
+    except httpx.HTTPStatusError as e:
+        print(f"Error HTTP: {e}")
+        return []
+    except httpx.RequestError as e:
+        print(f"Network error while requesting {e.request.url!r}: {e}")
+        return []
     
+
+
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
@@ -174,7 +189,7 @@ async def news(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def send_news(update: Update, context: ContextTypes.DEFAULT_TYPE, category: str) -> None:
  
-    category_info = get_news(category)
+    category_info = await get_news(category)
 
     if update.message:
         message = update.message
