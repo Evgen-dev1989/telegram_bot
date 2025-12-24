@@ -46,6 +46,22 @@ create_db = (
     """
 )
 
+
+db_pool = None
+
+async def init_pool():
+    global db_pool 
+    db_pool = await asyncpg.create_pool(
+        user = os.getenv("DB_USER"),
+        password = os.getenv("DB_PASSWORD"),
+        database = os.getenv("DB_NAME"),
+        host = os.getenv("DB_HOST"),
+        port = os.getenv("DB_PORT"),
+        min_size=1,  
+        max_size=10
+    )
+
+
 async def connect_db():
 
     return await asyncpg.connect(
@@ -57,22 +73,18 @@ async def connect_db():
         )
 
 
-async def command_execute(command, arguments = None):
-
-    conn = None
+async def command_execute(command, arguments=None):
+    if db_pool is None:
+        await init_pool()
+        
     try:
-        conn = await connect_db()
-        if arguments is not None:
-            await conn.execute(command, *arguments)
-        else :
-            await conn.execute(command)
-
-    except asyncpg.PostgresError as e:
-        raise e
-    
-    finally:
-        if conn is not None:  
-            await conn.close()
+        async with db_pool.acquire() as conn:
+            if arguments is not None:
+                await conn.execute(command, *arguments)
+            else:
+                await conn.execute(command)
+    except Exception as error:
+        print(f'Database error: {error}')
 
 
 def create_keyboard(buttons):
@@ -149,9 +161,7 @@ async def get_news(category):
             ready_news.append(news_item)
 
         return ready_news
-    except requests.RequestException as e:
-        print(f"Error fetching news: {e}")
-        return []
+
     except httpx.HTTPStatusError as e:
         print(f"Error HTTP: {e}")
         return []
@@ -206,6 +216,12 @@ async def send_news(update: Update, context: ContextTypes.DEFAULT_TYPE, category
 
 async def main():
 
+    await init_pool()
+    for query in create_db:
+        await command_execute(query)
+    
+
+    token = os.getenv("TELEGRAM_TOKEN")
     application = Application.builder().token(token).build()
 
     application.add_handler(CommandHandler("start", start))
@@ -214,7 +230,7 @@ async def main():
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))  
 
     await application.run_polling()
-
+    await db_pool.close()
 
 if __name__ == '__main__':
     asyncio.run(main())
