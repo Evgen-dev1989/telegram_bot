@@ -123,7 +123,7 @@ def get_news(category):
         'language': 'en',
         'category': category,
         'country': 'us',
-        'apiKey': '99a2323493084f53b211e6ed56a4921c',
+        'apiKey': os.getenv("NEWS_API_KEY"),
     }
 
     url = 'https://newsapi.org/v2/top-headlines'
