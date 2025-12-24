@@ -1,12 +1,24 @@
+import os
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 import requests
 import asyncio
 import asyncpg
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 import nest_asyncio
-from data import token, host, port, password, database, user
 
 
+token = os.getenv("TELEGRAM_TOKEN")
+news_key = os.getenv("NEWS_API_KEY")
+host = os.getenv("DB_HOST")
+port = os.getenv("DB_PORT")
+user = os.getenv("DB_NAME")
+database = os.getenv("DB_USER")
+password = os.getenv("DB_PASSWORD")
+
+
+
+load_dotenv()
 nest_asyncio.apply()
 
 

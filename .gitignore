@@ -6,6 +6,7 @@ db.py
 # C extensions
 *.so
 data.py
+.env
 
 # Distribution / packaging
 .Python
